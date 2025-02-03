@@ -4,66 +4,76 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
 import android.os.Build
 import android.os.IBinder
-import android.provider.Telephony
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import org.json.JSONArray
-import org.json.JSONObject
+import android.provider.Telephony
+import com.test.SMSReceiver
 
 class SMSBackgroundService : Service() {
-    private lateinit var smsBroadcastReceiver: SMSReceiver
+    private lateinit var smsReceiver: SMSReceiver
 
     override fun onCreate() {
-        super.onCreate()
-        smsBroadcastReceiver = SMSReceiver()
-        
-        // Register receiver dynamically
+        Log.e(TAG, "SMSBackgroundService onCreate() called")
+        // Initialize and register receiver
+        smsReceiver = SMSReceiver()
         val filter = IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION)
-        registerReceiver(smsBroadcastReceiver, filter)
+        registerReceiver(smsReceiver, filter)
+        super.onCreate()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Ensure service keeps running
+        Log.e(TAG, "SMSBackgroundService onStartCommand() called")
+        createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
         return START_STICKY
     }
 
-    private fun createNotification(): Notification {
-        val channelId = "SMS_SERVICE_CHANNEL"
-        val channelName = "SMS Background Service"
-
+    private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelId, 
-                channelName, 
+                CHANNEL_ID, 
+                "SMS Background Service", 
                 NotificationManager.IMPORTANCE_LOW
             )
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
+    }
 
-        return NotificationCompat.Builder(this, channelId)
+    private fun createNotification(): Notification {
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("SMS Listener Active")
             .setContentText("Listening for urgent messages")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
 
-    override fun onDestroy() {
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Log.e(TAG, "SMSBackgroundService onTaskRemoved() called")
+        super.onTaskRemoved(rootIntent)
+        val restartServiceIntent = Intent(applicationContext, this::class.java)
+        startService(restartServiceIntent)
+    }
+     override fun onDestroy() {
+        Log.e(TAG, "SMSBackgroundService onDestroy() called")
         super.onDestroy()
-        unregisterReceiver(smsBroadcastReceiver)
+        // Unregister receiver to prevent memory leaks
+        unregisterReceiver(smsReceiver)
     }
 
     companion object {
         private const val NOTIFICATION_ID = 1001
+        private const val CHANNEL_ID = "SMS_SERVICE_CHANNEL"
+        private const val TAG = "SMSBackgroundService"
     }
 }
