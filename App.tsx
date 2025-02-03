@@ -202,7 +202,7 @@ export default function App(): React.JSX.Element {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <TouchableOpacity onPress={() => NativeModules.ToastModule.show('Hello, world!', NativeModules.ToastModule.DURATION_SHORT)}>
+      {/* <TouchableOpacity onPress={() => NativeModules.ToastModule.show('Hello, world!', NativeModules.ToastModule.DURATION_SHORT)}>
         <View style={{
           padding: 10,
           backgroundColor: '#007AFF',
@@ -211,7 +211,7 @@ export default function App(): React.JSX.Element {
         }}>
           <Text style={{color: 'white'}}>Show Toast</Text>
         </View>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <Text style={styles.title}>Emergency SMS Settings</Text>
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -505,3 +505,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+/*
+  keytool -genkey -v -keystore test.keystore -alias test -keyalg RSA -keysize 2048 -validity 10000
+*/
